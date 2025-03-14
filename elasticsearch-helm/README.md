@@ -122,8 +122,8 @@ For securing access to the Elasticsearch instance via OpenShift routes:
 ### Clone the Helm Chart Repository
 
 ```sh
-git clone https://github.com/your-repo/elasticsearch-helm.git
-cd elas
+git clone git@github.com:hitalukder/elasticsearch.git
+cd elasticsearch/elasticsearch-helm
 ```
 
 ### Modify Values File
