@@ -1,0 +1,105 @@
+# Default values for enterprise elasticsearch deployment
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# clusterName provides the name of the elasticsearch cluster.
+clusterName: es-sample
+
+# elasticsearchVersion you can find the versions https://www.elastic.co/guide/en/elasticsearch/reference/current/es-release-notes.html
+elasticsearchVersion: 8.12.0
+
+# Storage class name for elasticsearch cluster. It will be used for all the nodes in elasticsearch.
+storageClassName: ibmc-vpc-block-10iops-tier 
+
+# This node describes all the required and optional nodes needed to provision an elasticsearch cluster.
+elasticsearchNodes:
+
+  # A node that has the master role, which makes it eligible to be elected as the master node, which controls the cluster.
+  masterNode:
+    # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+    replica_count: 1
+
+    # set resources adjust them as necessary
+    cpu_limit: 1
+    cpu_request: 1
+    memory_limit: 4Gi
+    memory_request: 4Gi
+    storage_size: 50Gi
+
+    # the recommended option is the half of the memory_limit
+    java_options: "-Xms2024m -Xmx2024m"
+
+  # A node that has one of several data roles. Data nodes hold data and perform data related operations such as CRUD, search, and aggregations. A node with a generic data role can fill any of the specialized data node roles.
+  dataNode:
+    # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+    replica_count: 1
+
+    # set resources adjust them as necessary
+    cpu_limit: 1
+    cpu_request: 1
+    memory_limit: 4Gi
+    memory_request: 4Gi
+    storage_size: 100Gi
+
+    # the recommended option is the half of the memory_limit
+    java_options: "-Xms2024m -Xmx2024m"
+
+  # A node that has the ingest role. Ingest nodes are able to apply an ingest pipeline to a document in order to transform and enrich the document before indexing. With a heavy ingest load, it makes sense to use dedicated ingest nodes and to not include the ingest role from nodes that have the master or data roles.
+  ingestNode:
+    # if you want to provision an ingest node, set the required value to true, otherwise false
+    required: true
+
+    # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+    replica_count: 1
+
+    # set resources adjust them as necessary
+    cpu_limit: 1
+    cpu_request: 1
+    memory_limit: 4Gi
+    memory_request: 4Gi
+    storage_size: 100Gi
+
+    # the recommended option is the half of the memory_limit
+    java_options: "-Xms2024m -Xmx2024m"
+
+  # A node that has the ml role. If you want to use machine learning features, there must be at least one machine learning node in your cluster. For more information, see Machine learning settings and Machine learning in the Elastic Stack.
+  mlNode:
+    # if you want to provision a ml node, set the required value to true, otherwise false
+    required: false
+
+    # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+    replica_count: 1
+
+    # set resources adjust them as necessary
+    cpu_limit: 4
+    cpu_request: 4
+    memory_limit: 8Gi
+    memory_request: 8Gi
+    storage_size: 200Gi
+
+    # the recommended option is the half of the memory_limit
+    java_options: "-Xms2024m -Xmx2024m"
+
+# this is for custom tls certificate for the openshift route to access elasticserch instance.
+# A self signed certificate is used for this example
+# Please generate your own certificate and fill up the fields crt and key.
+customTlsCertificate:
+  ##################################################################
+  # true = if you want to add your own certificate
+  # false = the elastic search will use its own self signed certificate
+  ##################################################################
+  required: false
+  # base64 encoded certificate
+  crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUR0akNDQXA0Q0NRRFBoZzZNM3lLWGl6QU5CZ2txaGtpRzl3MEJBUXNGQURDQm5ERUxNQWtHQTFVRUJoTUMKUTBFeEN6QUpCZ05WQkFnTUFrOU9NUkF3RGdZRFZRUUhEQWRVYjNKdmJuUnZNUjB3R3dZRFZRUUtEQlJKYm5OdwpieUJ6YjJ4MWRHbHZibk1nYVc1akxqRVJNQThHQTFVRUN3d0lVMjltZEhkaGNtVXhHakFZQmdOVkJBTU1FV1Z6CkxYTmhiWEJzWlMxamJIVnpkR1Z5TVNBd0hnWUpLb1pJaHZjTkFRa0JGaEZvZEdGc2RXdGtaWEpBYVdKdExtTnYKYlRBZUZ3MHlOVEF4TXpFeE9ESXlORGRhRncweU5qQXhNekV4T0RJeU5EZGFNSUdjTVFzd0NRWURWUVFHRXdKRApRVEVMTUFrR0ExVUVDQXdDVDA0eEVEQU9CZ05WQkFjTUIxUnZjbTl1ZEc4eEhUQWJCZ05WQkFvTUZFbHVjM0J2CklITnZiSFYwYVc5dWN5QnBibU11TVJFd0R3WURWUVFMREFoVGIyWjBkMkZ5WlRFYU1CZ0dBMVVFQXd3UlpYTXQKYzJGdGNHeGxMV05zZFhOMFpYSXhJREFlQmdrcWhraUc5dzBCQ1FFV0VXaDBZV3gxYTJSbGNrQnBZbTB1WTI5dApNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQTJwRlFlVnpnUk02V2tSaXBMSzdOCkZrbFlQamsxWlRNajZMaFI1cWpGb2NXelNEczJKend1RXc3SnZFb0pFWjNnSjV5VGpEcHhsbVpId1NUcGFJbFcKTUFJSHh3aUtiQ1duUVFpelZkTmVpZmI0aEZSZ1N0aXNQaGFDR2Q5Tm9LTWU1aHUwN1BkSFVmdVF6bVBLWlFGegoyOVpTa25nbU5DQmZhVFo3TTN1bTJBV2dZR2VsUklmUHNWZXJJUUZhdzd6VkN5SEp1N0wxNnlFUDU2dVVZVWZqCmNjNkxnWmwxVmNYZHE4dlZRQVZPZUdTTE1DS3JRUHBBZ1ZQOHZESTlTeVc2MjViQ3FEa3NmUzhKUy9RaUgwNmcKQmd5ZDZ6UGJiVU1lV295WTg0dk1oNHhlS1JBVHJrRmZhY1ZGMW53V2U1ZWFTTDFsa2Y0d2hjNEhPdFI4WTRQTgpMd0lEQVFBQk1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRRElBQ01LTVJsdURHdElrWXdBWnZzQ1BLRGNZbWhqCkc0YXgreCtoRSs2aU9VM2o4ZHgvR2UyMWlmRGFjcFlFTjNER2pEQ2xxNnBtRlVkMkdjMjBXZzc0T2hqelp4YVYKakJFemd4MkMwNFppQjRTVGltNUFoOExBYXZ6aGd2ZmZVbGU4cWp0WTRtaDdMWG9Yb3NnK3dSSll6YkdBMnhFWQptOEd6TWJjc2Fzc3R4aGFmVDFxMVB6bFNZdFhTWWg2ZitJMSswOE83dU11YWlrSGRMa3ZLZWJIa01tOGd0T0ViCm00WU85M3dnVURETGoyMCt1TER0MDcwRUF6L3NqLzVVSzE3bFh2cTlSdTRGdVo0SGpUakV4QU5kYVVPSlJwRysKVU9EOTFCNDNYNjREZHI4cUszbGl1UWlqWmNGRytHcEpoRlZDWVBHT3RpRWlpVlJxTjBDL29uVFcKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+
+  # base64 encoded certificate key
+  key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2d0lCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktrd2dnU2xBZ0VBQW9JQkFRRGFrVkI1WE9CRXpwYVIKR0trc3JzMFdTVmcrT1RWbE15UG91RkhtcU1XaHhiTklPelluUEM0VERzbThTZ2tSbmVBbm5KT01PbkdXWmtmQgpKT2xvaVZZd0FnZkhDSXBzSmFkQkNMTlYwMTZKOXZpRVZHQksyS3crRm9JWjMwMmdveDdtRzdUczkwZFIrNURPClk4cGxBWFBiMWxLU2VDWTBJRjlwTm5zemU2YllCYUJnWjZWRWg4K3hWNnNoQVZyRHZOVUxJY203c3ZYcklRL24KcTVSaFIrTnh6b3VCbVhWVnhkMnJ5OVZBQlU1NFpJc3dJcXRBK2tDQlUveThNajFMSmJyYmxzS29PU3g5THdsTAo5Q0lmVHFBR0RKM3JNOXR0UXg1YWpKanppOHlIakY0cEVCT3VRVjlweFVYV2ZCWjdsNXBJdldXUi9qQ0Z6Z2M2CjFIeGpnODB2QWdNQkFBRUNnZ0VCQUlqWW5PTXZ4SGN3UmROWTltczBrdEhXWURxdFJRSTB6OUhndmQ3R1l0OFQKMGxseVFVaTFoRCtJYmNUSE1nQm1zYmI3Y09KR29XSENia0MrNUtqLy9BZVk3ZGV2UUVQUUczVTdobFZCUHhydwpsODc2cVVPVGY5eHI2VTlib2RYbTYreTFBa1d2MldhNk5JTVV0ZDhoMXJHWThpQWt1LzY5R2gvYzdheGhTaWhMCnpVb2htZXIvUnBPeGZMdEVyVE1odlluTWh2QkpUVDRkekxadGJ3QkpxektFRkhqZVQ1b05xNVd4VTZnOUpBbWcKbjdiZGd5cXAyUWhhZUlkK3A0SXo4aXVqcFpYNndCQ2h3Z0hFRlhWdW0xSE1nTjRJQkVSY0crSmUzbmhtVHlPOQp0ZjRJdktDQ2RqN1V3NkhXOXF0UkIrcFg2d1pDUWh6MHpiczRHSzl1NlJrQ2dZRUE4TVd3dG84amlYeEpzRERWCmFJU0tjS3pJRmNOUG5UUTU2SnZMQkdLckFMQ1ZuejdBR2ZZSDFLUEs5VXBzUW5CK2xuQ0UzRGVMWmp1Q1R1RGMKTUdXTEJpR21WRWJodDBvQ2pmbW10aWM3eWw2NVZLTUZEd3NWMDVPTUZXM0t1QXA2dG9nd1JVZkpuYVhKbGxDVgpKK2NpdlRrbm5lb0ZFTEtSSXZrUEhhSW95aDBDZ1lFQTZHUWMwYjV6Q0NmUXQ4OHd2YlhmaXJKbWMxL0NNdjNZClVZblhRZlJEdkVEa29TT2JLSm1HYjhieDVqdHVUeFo1Y29KQmNTRE1LMklYTEx5enU3K29GNThVK2lWZkZObTQKeHhibExsNk5rdG4wZUVhdnFyVzg5enhaeEtlYmxsVHltV3lRRzA0dmZsUGlCQmZ6V0JwRGZtb3JIaUhWMzFCVAo4OVhUc2Zqd3Nyc0NnWUVBblhRS3JqaEpPeDNHYXF4a3d5YjZDZGxVTjdjMEYxQVNGcVhiVEJEaVYxOGpXYktGCm1mU2xCay9lNkM0MVFmV2pNdXArV0MwU3dsWmtUd1VKdWJTT0NBSjFiV08xTkZIMy9iU25hek9aREN5SjhtbHgKWTNjU1hQeCtmWDBCTnYzVFpnOEYwaWl5RnFCV2hqQkllb0hTMi8vR2dxU0pqM1BYS2hISjZzMGk4NWtDZ1lFQQp5aXM5L3lKR0JKUk91WG1nRjRwL25MT3krVEFYVERFVjNXbWpRSmQxemZKT2Mvajc1SWdiTW1iS3p0WnBFcGlrCnN2K3FXdmFEYUVKL2tzWGZQcmh2VFkxeHZHU0NvU3IvMndPS0FacjBZd3NGNlJUbGdnZDFDMGtQZDB1d3lVbkIKZThPOFltVFVZSHd0Smc2SC90OXFWREdjclN3V1daNFNTeEI4aUZuZlhEMENnWUJMWG9Vb25EY2VrSDJMYXVJdQo0blBEcnJDazJYa0lXaFlUOU1CeWxRTUJGcWhzdkYreHU2azVWZ1pYdTBDSG5mZ0xrRG1xUkhrZkZRRXBMUkMrCkRwVk5KVWdTcXh4UkVIQ3NISkVaaTFuT0JtTXRVSjJ0TUZxWDZYVHAzakRCWWhLRU1nK21rSHYvcG8ycUZMcGoKNlIyQ1BBTzh1dXJIT1Fac1dzbjlVay9rakE9PQotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tCg==
+
+# Kibana ui deployment to access and manage elasticsearch cluster
+kibana:
+  name: kb-sample
+  replica_count: 1
+  cpu_limit: 1
+  cpu_request: 500m
+  memory_limit: 2Gi
+  memory_request: 1Gi

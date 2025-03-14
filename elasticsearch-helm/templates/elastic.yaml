@@ -1,0 +1,243 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: {{ .Values.clusterName }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+spec:
+  version: {{ .Values.elasticsearchVersion }}
+  {{- if .Values.customTlsCertificate.required }}
+  http:
+    service:
+      metadata: {}
+      spec: {}
+    tls:
+      certificate:
+        secretName: {{ .Values.clusterName }}-tls-cert
+  {{- end }}
+
+  nodeSets:
+    - name: master
+      count: {{ .Values.elasticsearchNodes.masterNode.replica_count }}
+      config:
+        node.roles: ["master"]
+      podTemplate:
+        metadata:
+          labels:
+            app: master-nodes
+        spec:
+          serviceAccountName: es-sample-sa
+          initContainers:
+            - name: max-map-count-setter
+              image: docker.io/bash:5.2.15
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 32Mi
+              securityContext:
+                privileged: true
+                runAsUser: 0
+              command: ['/usr/local/bin/bash', '-e', '-c', 'echo 262144 > /proc/sys/vm/max_map_count']
+            - name: chown-data-volumes
+              command: ["sh", "-c", "chown elasticsearch:elasticsearch /usr/share/elasticsearch/data"]
+              securityContext:
+                privileged: true
+                runAsUser: 0
+          containers:
+            - name: elasticsearch
+              resources:
+                limits:
+                  memory: {{ .Values.elasticsearchNodes.masterNode.memory_limit }}
+                  cpu: {{ .Values.elasticsearchNodes.masterNode.cpu_limit }}
+                requests:
+                  memory: {{ .Values.elasticsearchNodes.masterNode.memory_request }}
+                  cpu: {{ .Values.elasticsearchNodes.masterNode.cpu_request }}
+              env:
+                - name: ES_JAVA_OPTS
+                  value: {{ .Values.elasticsearchNodes.masterNode.java_options }}
+                - name: path.data
+                  value: "/usr/share/elasticsearch/data"
+              volumeMounts:
+                - mountPath: /usr/share/elasticsearch/data
+                  name: elasticsearch-data-master-volume
+      volumeClaimTemplates:
+      - metadata:
+          name: elasticsearch-data-master-volume
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: {{ .Values.elasticsearchNodes.masterNode.storage_size }}
+          storageClassName: {{ .Values.storageClassName }}  
+    - name: data
+      count: {{ .Values.elasticsearchNodes.dataNode.replica_count }}
+      config:
+        node.roles: ["data"]
+      podTemplate:
+        metadata:
+          labels:
+            app: data-nodes
+        spec:
+          serviceAccountName: es-sample-sa
+          initContainers:
+            - name: max-map-count-setter
+              image: docker.io/bash:5.2.15
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 32Mi
+              securityContext:
+                privileged: true
+                runAsUser: 0
+              command: ['/usr/local/bin/bash', '-e', '-c', 'echo 262144 > /proc/sys/vm/max_map_count']
+            - name: chown-data-volumes
+              command: ["sh", "-c", "chown elasticsearch:elasticsearch /usr/share/elasticsearch/data"]
+              securityContext:
+                privileged: true
+                runAsUser: 0
+          containers:
+            - name: elasticsearch
+              resources:
+                limits:
+                  memory: {{ .Values.elasticsearchNodes.dataNode.memory_limit }}
+                  cpu: {{ .Values.elasticsearchNodes.dataNode.cpu_limit }}
+                requests:
+                  memory: {{ .Values.elasticsearchNodes.dataNode.memory_request }}
+                  cpu: {{ .Values.elasticsearchNodes.dataNode.cpu_request }}
+              env:
+                - name: ES_JAVA_OPTS
+                  value: {{ .Values.elasticsearchNodes.dataNode.java_options }}
+                - name: path.data
+                  value: "/usr/share/elasticsearch/data"
+              volumeMounts:
+                - mountPath: /usr/share/elasticsearch/data
+                  name: elasticsearch-data-master-volume
+      volumeClaimTemplates:
+      - metadata:
+          name: elasticsearch-data-master-volume
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: {{ .Values.elasticsearchNodes.dataNode.storage_size }}
+          storageClassName: {{ .Values.storageClassName }}  
+    
+    {{- if .Values.elasticsearchNodes.ingestNode.required }}
+    - name: ingest
+      count: {{ .Values.elasticsearchNodes.ingestNode.replica_count }}
+      config:
+        node.roles: ["ingest"]
+      podTemplate:
+        metadata:
+          labels:
+            app: ingest-nodes
+        spec:
+          serviceAccountName: es-sample-sa
+          initContainers:
+            - name: max-map-count-setter
+              image: docker.io/bash:5.2.15
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 32Mi
+              securityContext:
+                privileged: true
+                runAsUser: 0
+              command: ['/usr/local/bin/bash', '-e', '-c', 'echo 262144 > /proc/sys/vm/max_map_count']
+            - name: chown-ml-volumes
+              command: ["sh", "-c", "chown elasticsearch:elasticsearch /usr/share/elasticsearch/data"]
+              securityContext:
+                privileged: true
+                runAsUser: 0
+          containers:
+            - name: elasticsearch
+              resources:
+                limits:
+                  memory: {{ .Values.elasticsearchNodes.ingestNode.memory_limit }}
+                  cpu: {{ .Values.elasticsearchNodes.ingestNode.cpu_limit }}
+                requests:
+                  memory: {{ .Values.elasticsearchNodes.ingestNode.memory_request }}
+                  cpu: {{ .Values.elasticsearchNodes.ingestNode.cpu_request }}
+              env:
+                - name: ES_JAVA_OPTS
+                  value: {{ .Values.elasticsearchNodes.ingestNode.java_options }}
+                - name: path.data
+                  value: "/usr/share/elasticsearch/data"
+              volumeMounts:
+                - mountPath: /usr/share/elasticsearch/data
+                  name: elasticsearch-ingest-volume
+      volumeClaimTemplates:
+      - metadata:
+          name: elasticsearch-ingest-volume
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: {{ .Values.elasticsearchNodes.ingestNode.storage_size }}
+          storageClassName: {{ .Values.storageClassName }}    
+    {{- end }}    
+    
+    {{- if .Values.elasticsearchNodes.mlNode.required }}
+    - name: ml
+      count: {{ .Values.elasticsearchNodes.mlNode.replica_count }}
+      config:
+        node.roles: ["ml"]
+      podTemplate:
+        metadata:
+          labels:
+            app: ml-nodes
+        spec:
+          serviceAccountName: es-sample-sa
+          initContainers:
+            - name: max-map-count-setter
+              image: docker.io/bash:5.2.15
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 32Mi
+              securityContext:
+                privileged: true
+                runAsUser: 0
+              command: ['/usr/local/bin/bash', '-e', '-c', 'echo 262144 > /proc/sys/vm/max_map_count']
+            - name: chown-ml-volumes
+              command: ["sh", "-c", "chown elasticsearch:elasticsearch /usr/share/elasticsearch/data"]
+              securityContext:
+                privileged: true
+                runAsUser: 0
+          containers:
+            - name: elasticsearch
+              resources:
+                limits:
+                  memory: {{ .Values.elasticsearchNodes.mlNode.memory_limit }}
+                  cpu: {{ .Values.elasticsearchNodes.mlNode.cpu_limit }}
+                requests:
+                  memory: {{ .Values.elasticsearchNodes.mlNode.memory_request }}
+                  cpu: {{ .Values.elasticsearchNodes.mlNode.cpu_request }}
+              env:
+                - name: ES_JAVA_OPTS
+                  value: {{ .Values.elasticsearchNodes.mlNode.java_options }}
+                - name: path.data
+                  value: "/usr/share/elasticsearch/data"
+              volumeMounts:
+                - mountPath: /usr/share/elasticsearch/data
+                  name: elasticsearch-ml-volume
+      volumeClaimTemplates:
+      - metadata:
+          name: elasticsearch-ml-volume
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: {{ .Values.elasticsearchNodes.mlNode.storage_size }}
+          storageClassName: {{ .Values.storageClassName }}
+    {{- end }}
+

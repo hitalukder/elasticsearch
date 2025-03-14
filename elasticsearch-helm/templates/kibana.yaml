@@ -1,0 +1,32 @@
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: {{ .Values.kibana.name }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+spec:
+  count: 1
+  elasticsearchRef:
+    name: {{ .Values.clusterName }}
+  enterpriseSearchRef:
+    name: enterprise-search-{{ .Values.clusterName }}
+  podTemplate:
+    metadata:
+      labels:
+        app: kibana-app
+    spec:
+      containers:
+        - name: kibana
+          resources:
+            limits:
+              cpu: {{ .Values.kibana.cpu_limit }}
+              memory: {{ .Values.kibana.memory_limit }}
+            requests:
+              cpu: {{ .Values.kibana.cpu_request }}
+              memory: {{ .Values.kibana.memory_request }}
+  version: {{ .Values.elasticsearchVersion }}
