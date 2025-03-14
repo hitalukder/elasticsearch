@@ -61,9 +61,23 @@ Let's build a minimum setup with 4 data nodes with 1 replica per shard, 3 master
 - **Total Storage**: 50GB–100GB
 - **Simultaneous embeddings**: 64 (16 threads per allocation * 4 nodes)
 
-## Configuration
+## Deployment
 
-The following configurations are available in the [`values.yaml`](values.yaml) file and modify the values file based on your use case. A production like configuration also added in the repo. [`prod-values.yaml`](prod-values.yaml)
+### Clone the Helm Chart Repository
+
+```sh
+git clone git@github.com:hitalukder/elasticsearch.git
+cd elasticsearch/elasticsearch-helm
+```
+
+### Modify Values File
+
+Open the repository in a code editor and update `values.yaml` based on your use case. Sample values files:
+
+- **Basic version**: [`values.yaml`](values.yaml)
+- **Production-like version**: [`prod-values.yaml`](prod-values.yaml)
+
+The following configuration parameters are available to adjust based on your use case in the values file.
 
 ### Cluster Configuration
 
@@ -117,23 +131,14 @@ For securing access to the Elasticsearch instance via OpenShift routes:
 - **crt**: Base64-encoded certificate.
 - **key**: Base64-encoded private key.
 
-## Deployment
-
-### Clone the Helm Chart Repository
-
-```sh
-git clone git@github.com:hitalukder/elasticsearch.git
-cd elasticsearch/elasticsearch-helm
-```
-
-### Modify Values File
-
-Open the repository in a code editor and update `values.yaml` based on your use case. Sample values files:
-
-- **Basic version**: `values.yaml`
-- **Production-like version**: `prod-values.yaml`
 
 ### Deploy Elasticsearch
+
+#### Create a new project to deploy an Elasticsearch cluster
+
+```sh
+oc new-project elastic-vector-db
+```
 
 #### Basic Deployment
 
